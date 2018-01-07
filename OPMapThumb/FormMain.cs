@@ -24,7 +24,6 @@ namespace OPMapThumb
 		Image m_thumb;
 
 #if DEBUG
-		const string DEBUG_FILENAME = @"C:\Users\Nimble\Documents\ManiaPlanet\Maps\My Maps\Finished\ScratchyEdited.Map.Gbx";
 		const string DEBUG_REPLACE_SOURCE = @"C:\Users\Nimble\Desktop\happy.png";
 #endif
 
@@ -37,11 +36,11 @@ namespace OPMapThumb
 
 			AllowDrop = true;
 
-#if DEBUG
-			OpenMap(DEBUG_FILENAME);
-#else
-			ClearMap();
-#endif
+			if (Program.StartLoadFile != null && File.Exists(Program.StartLoadFile)) {
+				OpenMap(Program.StartLoadFile);
+			} else {
+				ClearMap();
+			}
 		}
 
 		private void ClearMap()

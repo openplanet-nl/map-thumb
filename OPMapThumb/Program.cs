@@ -8,12 +8,15 @@ namespace OPMapThumb
 {
 	static class Program
 	{
-		/// <summary>
-		/// The main entry point for the application.
-		/// </summary>
+		public static string StartLoadFile;
+
 		[STAThread]
-		static void Main()
+		static void Main(string[] args)
 		{
+			if (args.Length > 0) {
+				StartLoadFile = args[0];
+			}
+
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 			Application.Run(new FormMain());
