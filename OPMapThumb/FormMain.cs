@@ -36,8 +36,7 @@ namespace OPMapThumb
 			InitializeComponent();
 
 #if DEBUG
-			ClearMap();
-			//OpenMap(DEBUG_FILENAME);
+			OpenMap(DEBUG_FILENAME);
 #else
 			ClearMap();
 #endif
