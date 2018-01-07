@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -22,6 +23,11 @@ namespace OPMapThumb
 
 		Image m_thumb;
 
+#if DEBUG
+		const string DEBUG_FILENAME = @"C:\Users\Nimble\Documents\ManiaPlanet\Maps\My Maps\Finished\ScratchyEdited.Map.Gbx";
+		const string DEBUG_REPLACE_SOURCE = @"C:\Users\Nimble\Desktop\happy.png";
+#endif
+
 		const uint TYPEID_MAP = 0x03043000;
 		const uint TYPEID_MAP_THUMBNAIL = TYPEID_MAP | 0x07;
 
@@ -30,15 +36,30 @@ namespace OPMapThumb
 			InitializeComponent();
 
 #if DEBUG
-			m_filename = @"C:\Users\Nimble\Documents\ManiaPlanet\Maps\My Maps\Finished\ScratchyEdited.Map.Gbx";
+			ClearMap();
+			//OpenMap(DEBUG_FILENAME);
 #else
-			var ofd = new OpenFileDialog();
-			ofd.Filter = "Maniaplanet Map Files (*.Map.Gbx)|*.Map.Gbx";
-			if (ofd.ShowDialog() != DialogResult.OK) {
-				Environment.Exit(1);
-			}
-			m_filename = ofd.FileName;
+			ClearMap();
 #endif
+		}
+
+		private void ClearMap()
+		{
+			if (m_thumb != null) {
+				m_thumb.Dispose();
+			}
+			m_thumb = null;
+
+			buttonExport.Enabled = false;
+			buttonReplace.Enabled = false;
+			picPreview.Image = null;
+
+			labelInfo.Text = "No map loaded.";
+		}
+
+		private void OpenMap(string filename)
+		{
+			m_filename = filename;
 
 			Text = "Openplanet Map Thumb - " + Path.GetFileName(m_filename);
 
@@ -81,10 +102,42 @@ namespace OPMapThumb
 
 			if (m_thumbOffset == 0) {
 				MessageBox.Show("Unsupported file, unable to find the thumbnail.", "Openplanet", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				Environment.Exit(2);
+				return;
 			}
 
+			UpdateInterface();
+		}
+
+		private void UpdateInterface()
+		{
+			if (m_thumb == null) {
+				ClearMap();
+				return;
+			}
+
+			buttonExport.Enabled = true;
+			buttonReplace.Enabled = true;
+
 			picPreview.Image = m_thumb;
+
+			labelInfo.Text = m_thumb.Width + " x " + m_thumb.Height + " (" + FormatBytes(m_thumbSize) + ")";
+		}
+
+		private string FormatBytes(int bytes)
+		{
+			if (bytes < 1000) {
+				return bytes + " B";
+			}
+
+			if (bytes < 1000 * 1000) {
+				return (bytes / 1000.0).ToString("F2") + " KB";
+			}
+
+			if (bytes < 1000 * 1000 * 1000) {
+				return (bytes / 1000.0 / 1000.0).ToString("F2") + " MB";
+			}
+
+			return "";
 		}
 
 		private Image FlipImage(Image image)
@@ -136,6 +189,15 @@ namespace OPMapThumb
 			}
 		}
 
+		private void buttonOpenMap_Click(object sender, EventArgs e)
+		{
+			var ofd = new OpenFileDialog();
+			ofd.Filter = "Maniaplanet Map Files (*.Map.Gbx)|*.Map.Gbx";
+			if (ofd.ShowDialog() == DialogResult.OK) {
+				OpenMap(ofd.FileName);
+			}
+		}
+
 		private void buttonSave_Click(object sender, EventArgs e)
 		{
 			var sfd = new SaveFileDialog();
@@ -159,21 +221,16 @@ namespace OPMapThumb
 					m_thumb.Save(sfd.FileName, encoder, encoderParams);
 				} catch (Exception ex) {
 					MessageBox.Show("Failed to save jpeg image to \"" + sfd.FileName + "\".\n\n" + ex.ToString(), "Openplanet", MessageBoxButtons.OK, MessageBoxIcon.Error);
-					return;
 				}
 			} else if (ext == ".png") {
 				try {
 					m_thumb.Save(sfd.FileName, ImageFormat.Png);
 				} catch (Exception ex) {
 					MessageBox.Show("Failed to save png image to \"" + sfd.FileName + "\".\n\n" + ex.ToString(), "Openplanet", MessageBoxButtons.OK, MessageBoxIcon.Error);
-					return;
 				}
 			} else {
 				MessageBox.Show("Unsupported file extension \"" + ext + "\". Use .jpg or .png instead.", "Openplanet", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				return;
 			}
-
-			MessageBox.Show("Successfully saved image to \"" + sfd.FileName + "\".", "Openplanet", MessageBoxButtons.OK, MessageBoxIcon.Information);
 		}
 
 		private void buttonReplace_Click(object sender, EventArgs e)
@@ -181,7 +238,7 @@ namespace OPMapThumb
 			string fnmSource;
 
 #if DEBUG
-			fnmSource = @"C:\Users\Nimble\Desktop\happy.png";
+			fnmSource = DEBUG_REPLACE_SOURCE;
 #else
 			var ofd = new OpenFileDialog();
 			ofd.Filter = "Jpeg image (*.jpg)|*.jpg|PNG image (*.png)|*.png";
@@ -279,10 +336,20 @@ namespace OPMapThumb
 				}
 			}
 
+			File.Delete(m_filename);
+			File.Move(newFilename, m_filename);
+
 			m_thumbSize = newSize;
 
 			m_thumb.Dispose();
 			m_thumb = img;
+
+			UpdateInterface();
+		}
+
+		private void buttonAbout_Click(object sender, EventArgs e)
+		{
+			Process.Start("https://openplanet.nl/");
 		}
 	}
 }
