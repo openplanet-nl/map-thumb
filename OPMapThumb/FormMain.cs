@@ -126,7 +126,7 @@ namespace OPMapThumb
 				using (var flippedImage = FlipImage(img)) {
 					flippedImage.Save(imgStream, encoder, encoderParams);
 				}
-				imgBuffer = imgStream.GetBuffer();
+				imgBuffer = imgStream.ToArray();
 			}
 
 			var newFilename = m_filename + ".openplanet";
